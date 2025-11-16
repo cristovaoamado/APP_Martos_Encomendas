@@ -35,6 +35,9 @@ jobs:
       - name: Build Windows App
         run: flutter build windows --release
 
+      - name: Debug - List build folder
+        run: dir build/windows/runner /s
+
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
