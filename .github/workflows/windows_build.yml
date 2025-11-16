@@ -35,11 +35,12 @@ jobs:
       - name: Build Windows App
         run: flutter build windows --release
 
-      - name: Debug - List build folder
-        run: dir build/windows/runner /s
+      # (Opcional) Debug
+      - name: Debug - List folders
+        run: dir build\windows\x64\runner\Release\ /s
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-release
-          path: build/windows/runner/Release/
+          path: build/windows/x64/runner/Release/
