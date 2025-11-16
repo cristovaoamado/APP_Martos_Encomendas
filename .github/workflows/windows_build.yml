@@ -1,45 +1,45 @@
 name: Build Windows App
 
 on:
+  push:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  build:
+  build-windows:
     runs-on: windows-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Visual Studio Build Tools
-        uses: microsoft/setup-msbuild@v1
-
-      - name: Install Windows dependencies
-        run: |
-          choco install visualstudio2022buildtools --params "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64" -y
-          choco install windows-sdk-10 -y
-          choco install cmake -y
-          choco install ninja -y
-
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
 
-      - name: Enable Windows Desktop
-        run: flutter config --enable-windows-desktop
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            build
+          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
 
-      - name: Get dependencies
+      - name: Install dependencies
         run: flutter pub get
 
-      - name: Build Windows App
+      - name: Enable Windows support
+        run: flutter config --enable-windows-desktop
+
+      - name: Build Windows Release
         run: flutter build windows --release
 
-      - name: Debug - List folders
-        run: dir "build/windows/x64/runner/Release" /s
+      - name: List build output
+        run: Get-ChildItem "build/windows/x64/runner/Release" -Recurse
 
-      - name: Upload Artifacts
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-release
-          path: build/windows/x64/runner/Release/
+          name: windows-build
+          path: build/windows/x64/runner/Release
