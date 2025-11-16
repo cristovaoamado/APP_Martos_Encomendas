@@ -11,21 +11,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install Visual Studio Build Tools
+        uses: microsoft/setup-msbuild@v1
+
+      - name: Install Windows dependencies
+        run: |
+          choco install visualstudio2022buildtools --params "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64" -y
+          choco install windows-sdk-10 -y
+          choco install cmake -y
+          choco install ninja -y
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
 
-      - name: Enable Windows desktop
+      - name: Enable Windows Desktop
         run: flutter config --enable-windows-desktop
 
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Build Windows app
+      - name: Build Windows App
         run: flutter build windows --release
 
-      - name: Upload build artifact
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-release
