@@ -8,8 +8,10 @@ class Produto {
   final String codigoProduto;
   final String designacaoProduto;
   final int idEstado;
-  final double? pvp1;
-  final double? pvp2;
+  
+  @JsonKey(name: 'precoProduto')
+  final double? precoProduto;
+  
   final bool ativo;
 
   Produto({
@@ -17,14 +19,12 @@ class Produto {
     required this.codigoProduto,
     required this.designacaoProduto,
     required this.idEstado,
-    this.pvp1,
-    this.pvp2,
+    this.precoProduto,
     required this.ativo,
   });
 
-  // Propriedades computadas
+  // Propriedade computada para facilitar o uso
   String get codigoDesignacao => '$codigoProduto - $designacaoProduto';
-  double? get precoProduto => pvp1; // ou pvp2, dependendo da tua lógica
 
   factory Produto.fromJson(Map<String, dynamic> json) => _$ProdutoFromJson(json);
   Map<String, dynamic> toJson() => _$ProdutoToJson(this);

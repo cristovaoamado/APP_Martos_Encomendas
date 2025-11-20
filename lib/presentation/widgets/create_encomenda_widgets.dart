@@ -5,7 +5,7 @@ import '../../../data/models/encomenda.dart';
 import '../../../data/models/produto.dart';
 import '../../../data/models/cor.dart';
 import '../../../data/models/tamanho.dart';
-import '../../../data/providers/lookup_providers.dart';
+import '../../data/providers/lookup_providers.dart.backup';
 import '../../../data/providers/providers.dart';
 import '../../../core/constants/ui_constants.dart';
 import '../../../core/utils/validators.dart';
@@ -480,10 +480,12 @@ class _FinalizarStepState extends ConsumerState<_FinalizarStep> {
         detalhes: carrinho.itens.map((item) {
           return CreateEncomendaDetalheDto(
             idProduto: item.idProduto,
+            designacaoProduto: item.designacaoProduto,
             idCor: item.idCor,
             idTamanho: item.idTamanho,
             quantidade: item.quantidade,
             preco: item.preco,
+            total: item.preco * item.quantidade
           );
         }).toList(),
       );

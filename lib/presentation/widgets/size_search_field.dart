@@ -93,7 +93,12 @@ class _SizeSearchFieldState extends ConsumerState<SizeSearchField> {
   void _selectSize(Tamanho tamanho) {
     setState(() {
       _selectedSize = tamanho;
-      _controller.text = tamanho.codigoDesignacao;
+      // Usar campos que existem no modelo
+      final codigo = tamanho.codigoTamanho;
+      final designacao = tamanho.designacaoTamanho;
+      _controller.text = designacao != null && designacao.isNotEmpty
+          ? '$codigo - $designacao'
+          : codigo;
       _searchResults = [];
       _showDropdown = false;
     });

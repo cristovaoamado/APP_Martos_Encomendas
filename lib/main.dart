@@ -8,6 +8,7 @@ import 'presentation/screens/home/home_screen.dart';
 import 'presentation/screens/encomenda/encomendas_list_screen.dart';
 import 'presentation/screens/encomenda/create_encomenda_screen.dart';
 import 'presentation/screens/encomenda/encomenda_detail_screen.dart';
+import 'core/theme/app_theme.dart';
 
 void main() async {
   // Garantir inicialização dos bindings do Flutter
@@ -38,30 +39,7 @@ class MyApp extends ConsumerWidget {
     return MaterialApp(
       title: 'Gestão de Encomendas',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 12,
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24,
-              vertical: 12,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        ),
-      ),
+      theme: AppTheme.lightTheme,
       initialRoute: '/login',
       routes: {
         '/login': (context) => const LoginScreen(),

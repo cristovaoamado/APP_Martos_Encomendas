@@ -2,156 +2,184 @@ import 'package:flutter/material.dart';
 import '../constants/ui_constants.dart';
 
 class AppTheme {
-  // Cores principais
-  static const Color primaryColor = Color(0xFF1976D2);
-  static const Color secondaryColor = Color(0xFF424242);
-  static const Color accentColor = Color(0xFFFF9800);
-  static const Color errorColor = Color(0xFFD32F2F);
-  static const Color successColor = Color(0xFF388E3C);
-  static const Color warningColor = Color(0xFFFFA726);
-  
-  // Cores de fundo
-  static const Color backgroundColor = Color(0xFFF5F5F5);
+  // CORES
+  static const Color navyBlue = Color(0xFF002B5B);
+  static const Color turquoise = Color(0xFF00C8D7);
+
+  static const Color backgroundColor = Color(0xFFF4F8FB);
   static const Color surfaceColor = Colors.white;
-  static const Color cardColor = Colors.white;
-  
-  // Cores de texto
-  static const Color textPrimary = Color(0xFF212121);
-  static const Color textSecondary = Color(0xFF757575);
-  static const Color textHint = Color(0xFFBDBDBD);
-  
+
+  static const Color textPrimary = Color(0xFF1A1A1A);
+  static const Color textSecondary = Color(0xFF4F4F4F);
+
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    primaryColor: primaryColor,
-    scaffoldBackgroundColor: backgroundColor,
-    
+
+    // CORES BASE
+    primaryColor: navyBlue,
     colorScheme: const ColorScheme.light(
-      primary: primaryColor,
-      secondary: secondaryColor,
-      surface: surfaceColor,
-      error: errorColor,
+      primary: navyBlue,
+      secondary: turquoise,
+      surface: Colors.white,
+      error: Color(0xFFD32F2F),
     ),
-    
+
+    scaffoldBackgroundColor: backgroundColor,
+
+    // APP BAR
     appBarTheme: const AppBarTheme(
-      elevation: 0,
-      centerTitle: true,
-      backgroundColor: primaryColor,
+      backgroundColor: navyBlue,
       foregroundColor: Colors.white,
+      elevation: 2,
+      centerTitle: true,
+      titleSpacing: UIConstants.spacingL,
       titleTextStyle: TextStyle(
         fontSize: UIConstants.fontXL,
         fontWeight: FontWeight.bold,
         color: Colors.white,
       ),
     ),
-    
-    cardTheme: CardTheme(
-      elevation: UIConstants.elevationS,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(UIConstants.radiusM),
-      ),
-      color: cardColor,
+
+    // CARTÕES / CARDS
+    cardTheme: const CardTheme(
+      elevation: 2,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      margin: EdgeInsets.all(UIConstants.spacingM),
     ),
-    
+
+    // BOTÃO TEXTO (GRANDE)
+    textButtonTheme: TextButtonThemeData(
+      style: ButtonStyle(
+        foregroundColor: WidgetStateProperty.all(navyBlue),
+        padding: WidgetStateProperty.all(
+          const EdgeInsets.symmetric(
+            vertical: UIConstants.spacingL,
+            horizontal: UIConstants.spacingXL,
+          ),
+        ),
+        shape: WidgetStateProperty.all(
+          const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        ),
+        textStyle: WidgetStateProperty.all(
+          const TextStyle(
+            fontSize: UIConstants.fontM,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    ),
+
+    // BOTÃO PREENCHIDO (FILLED) — igual ao ElevatedButton
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: navyBlue,
+        foregroundColor: Colors.white,
+        elevation: 3,
+        padding: const EdgeInsets.symmetric(
+          vertical: UIConstants.spacingL,
+          horizontal: UIConstants.spacingXL,
+        ),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        textStyle: const TextStyle(
+          fontSize: UIConstants.fontL,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+
+    // BOTÃO ELEVADO (GRANDE)
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        elevation: UIConstants.elevationM,
-        padding: const EdgeInsets.symmetric(
-          horizontal: UIConstants.spacingL,
-          vertical: UIConstants.spacingM,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(UIConstants.radiusM),
-        ),
-        backgroundColor: primaryColor,
+        backgroundColor: navyBlue,
         foregroundColor: Colors.white,
+        elevation: 3,
+        padding: const EdgeInsets.symmetric(
+          vertical: UIConstants.spacingL,
+          horizontal: UIConstants.spacingXL,
+        ),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        textStyle: const TextStyle(
+          fontSize: UIConstants.fontL,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     ),
-    
+
+    // BOTÃO CONTORNADO
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
+        side: const BorderSide(color: navyBlue, width: 2),
         padding: const EdgeInsets.symmetric(
-          horizontal: UIConstants.spacingL,
-          vertical: UIConstants.spacingM,
+          vertical: UIConstants.spacingL,
+          horizontal: UIConstants.spacingXL,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(UIConstants.radiusM),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        foregroundColor: navyBlue,
+        textStyle: const TextStyle(
+          fontSize: UIConstants.fontM,
+          fontWeight: FontWeight.w600,
         ),
-        side: const BorderSide(color: primaryColor),
-        foregroundColor: primaryColor,
       ),
     ),
-    
+
+    // INPUTS / CAMPOS DE TEXTO
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(
-        horizontal: UIConstants.spacingM,
-        vertical: UIConstants.spacingM,
+        horizontal: UIConstants.spacingL,
+        vertical: UIConstants.spacingL,
       ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(UIConstants.radiusM),
-        borderSide: const BorderSide(color: Colors.grey),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(UIConstants.radiusM),
+        borderRadius: BorderRadius.zero,
         borderSide: BorderSide(color: Colors.grey.shade300),
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(UIConstants.radiusM),
-        borderSide: const BorderSide(color: primaryColor, width: 2),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.zero,
+        borderSide: BorderSide(color: Colors.grey.shade300),
       ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(UIConstants.radiusM),
-        borderSide: const BorderSide(color: errorColor),
+      focusedBorder: const OutlineInputBorder(
+        borderRadius: BorderRadius.zero,
+        borderSide: BorderSide(color: turquoise, width: 2),
+      ),
+      errorBorder: const OutlineInputBorder(
+        borderRadius: BorderRadius.zero,
+        borderSide: BorderSide(color: Colors.red),
       ),
     ),
-    
+
+    // FLOATING BUTTON
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      elevation: UIConstants.elevationM,
-      backgroundColor: accentColor,
+      backgroundColor: turquoise,
       foregroundColor: Colors.white,
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
     ),
-    
+
+    // DIVISOR
     dividerTheme: DividerThemeData(
       color: Colors.grey.shade300,
       thickness: 1,
       space: UIConstants.spacingM,
     ),
-    
+
+    // TIPOGRAFIA
     textTheme: const TextTheme(
       displayLarge: TextStyle(
-        fontSize: UIConstants.fontXXL,
-        fontWeight: FontWeight.bold,
-        color: textPrimary,
-      ),
-      displayMedium: TextStyle(
-        fontSize: UIConstants.fontXL,
+        fontSize: 32,
         fontWeight: FontWeight.bold,
         color: textPrimary,
       ),
       titleLarge: TextStyle(
-        fontSize: UIConstants.fontL,
+        fontSize: 22,
         fontWeight: FontWeight.w600,
         color: textPrimary,
       ),
-      titleMedium: TextStyle(
-        fontSize: UIConstants.fontM,
-        fontWeight: FontWeight.w500,
-        color: textPrimary,
-      ),
-      bodyLarge: TextStyle(
-        fontSize: UIConstants.fontL,
-        color: textPrimary,
-      ),
-      bodyMedium: TextStyle(
-        fontSize: UIConstants.fontM,
-        color: textPrimary,
-      ),
-      bodySmall: TextStyle(
-        fontSize: UIConstants.fontS,
-        color: textSecondary,
-      ),
+      bodyLarge: TextStyle(fontSize: 18, color: textPrimary),
+      bodyMedium: TextStyle(fontSize: 16, color: textPrimary),
+      bodySmall: TextStyle(fontSize: 14, color: textSecondary),
     ),
   );
 }

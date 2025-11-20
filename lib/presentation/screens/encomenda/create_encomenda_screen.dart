@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -11,9 +12,9 @@ import '../../../data/providers/providers.dart';
 import '../../../core/constants/ui_constants.dart';
 import '../../../core/utils/format_utils.dart';
 import '../../../core/utils/validators.dart';
-import '../../widgets/loading_widget.dart';
 import '../../widgets/product_search_field.dart';
 import '../../widgets/color_search_field.dart';
+import '../../widgets/cliente_search_field.dart';
 import '../../widgets/size_search_field.dart';
 
 // ============= CARRINHO STATE =============
@@ -116,13 +117,29 @@ class _CreateEncomendaScreenState extends ConsumerState<CreateEncomendaScreen> {
         },
         onStepTapped: (step) => setState(() => _currentStep = step),
         controlsBuilder: (context, details) {
+          // Estamos no último passo
+          if (_currentStep == 2) {
+            return Padding(
+              padding: const EdgeInsets.only(top: UIConstants.spacingM),
+              child: Row(
+                children: [
+                  OutlinedButton(
+                    onPressed: details.onStepCancel,
+                    child: const Text('Voltar'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          // Passos normais (0 e 1)
           return Padding(
             padding: const EdgeInsets.only(top: UIConstants.spacingM),
             child: Row(
               children: [
                 ElevatedButton(
                   onPressed: details.onStepContinue,
-                  child: Text(_currentStep == 2 ? 'Finalizar' : 'Continuar'),
+                  child: const Text('Continuar'),
                 ),
                 const SizedBox(width: UIConstants.spacingM),
                 OutlinedButton(
@@ -166,47 +183,57 @@ class _CreateEncomendaScreenState extends ConsumerState<CreateEncomendaScreen> {
 
 // ============= STEP 1: CLIENTE =============
 
-class _ClienteStep extends ConsumerStatefulWidget {
+// ============================================================================
+// STEP 1: CLIENTE (COM PESQUISA)
+// ============================================================================
+
+class _ClienteStep extends ConsumerWidget {
   const _ClienteStep();
 
   @override
-  ConsumerState<_ClienteStep> createState() => _ClienteStepState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final carrinho = ref.watch(carrinhoProvider);
 
-class _ClienteStepState extends ConsumerState<_ClienteStep> {
-  Cliente? _selectedCliente;
-
-  @override
-  Widget build(BuildContext context) {
-    final clientesAsync = ref.watch(clientesListProvider);
-
-    return clientesAsync.when(
-      data:
-          (clientes) => DropdownButtonFormField<Cliente>(
-            value: _selectedCliente,
-            decoration: const InputDecoration(
-              labelText: 'Cliente *',
-              prefixIcon: Icon(Icons.person),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Info Card
+        if (carrinho.cliente != null)
+          Card(
+            color: Colors.green.shade50,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '✅ Cliente Selecionado',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${carrinho.cliente!.codigoCliente} - ${carrinho.cliente!.nomeCliente}',
+                  ),
+                  if (carrinho.cliente!.nif != null)
+                    Text('NIF: ${carrinho.cliente!.nif}'),
+                ],
+              ),
             ),
-            items:
-                clientes.map((cliente) {
-                  return DropdownMenuItem(
-                    value: cliente,
-                    child: Text(
-                      '${cliente.codigoCliente} - ${cliente.nomeCliente}',
-                    ),
-                  );
-                }).toList(),
-            onChanged: (cliente) {
-              setState(() => _selectedCliente = cliente);
-              if (cliente != null) {
-                ref.read(carrinhoProvider.notifier).setCliente(cliente);
-              }
-            },
-            validator: (value) => value == null ? 'Selecione um cliente' : null,
           ),
-      loading: () => const LoadingWidget(),
-      error: (error, stack) => Text('Erro: $error'),
+
+        const SizedBox(height: 16),
+
+        // Campo de Pesquisa de Cliente
+        ClienteSearchField(
+          initialValue:
+              carrinho.cliente != null
+                  ? '${carrinho.cliente!.codigoCliente} - ${carrinho.cliente!.nomeCliente}'
+                  : null,
+          onClienteSelected: (cliente) {
+            ref.read(carrinhoProvider.notifier).setCliente(cliente);
+          },
+        ),
+      ],
     );
   }
 }
@@ -265,11 +292,20 @@ class _ProdutosStep extends ConsumerWidget {
                           fontSize: 16,
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      // Botão Editar
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.blue),
+                        tooltip: 'Editar',
+                        onPressed:
+                            () => _showEditProdutoDialog(context, index, item),
+                      ),
+                      // Botão Eliminar
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          ref.read(carrinhoProvider.notifier).removeItem(index);
-                        },
+                        tooltip: 'Eliminar',
+                        onPressed:
+                            () => _confirmDelete(context, ref, index, item),
                       ),
                     ],
                   ),
@@ -306,12 +342,75 @@ class _ProdutosStep extends ConsumerWidget {
   void _showAddProdutoDialog(BuildContext context) {
     showDialog(context: context, builder: (_) => const _AddProdutoDialog());
   }
+
+  void _showEditProdutoDialog(
+    BuildContext context,
+    int index,
+    EncomendaDetalhe item,
+  ) {
+    showDialog(
+      context: context,
+      builder:
+          (_) => _AddProdutoDialog(
+            editMode: true,
+            editIndex: index,
+            existingItem: item,
+          ),
+    );
+  }
+
+  void _confirmDelete(
+    BuildContext context,
+    WidgetRef ref,
+    int index,
+    EncomendaDetalhe item,
+  ) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Confirmar Eliminação'),
+            content: Text(
+              'Deseja eliminar "${item.codigoProduto} - ${item.designacaoProduto}"?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  ref.read(carrinhoProvider.notifier).removeItem(index);
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Produto removido'),
+                      backgroundColor: Colors.orange,
+                      duration: Duration(seconds: 1),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text('Eliminar'),
+              ),
+            ],
+          ),
+    );
+  }
 }
 
-// ============= DIALOG: ADICIONAR PRODUTO =============
+// ============= DIALOG: ADICIONAR/EDITAR PRODUTO =============
 
 class _AddProdutoDialog extends ConsumerStatefulWidget {
-  const _AddProdutoDialog();
+  final bool editMode;
+  final int? editIndex;
+  final EncomendaDetalhe? existingItem;
+
+  const _AddProdutoDialog({
+    this.editMode = false,
+    this.editIndex,
+    this.existingItem,
+  });
 
   @override
   ConsumerState<_AddProdutoDialog> createState() => _AddProdutoDialogState();
@@ -325,6 +424,70 @@ class _AddProdutoDialogState extends ConsumerState<_AddProdutoDialog> {
   final _quantidadeController = TextEditingController(text: '1');
   final _precoController = TextEditingController();
 
+  bool _keepDialogOpen = true;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.editMode && widget.existingItem != null) {
+      // Em modo de edição, preencher com os valores existentes
+      _quantidadeController.text = widget.existingItem!.quantidade.toString();
+      _precoController.text = widget.existingItem!.preco.toString();
+      _keepDialogOpen = false;
+
+      // Carregar os objetos completos dos providers
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadExistingData();
+      });
+    } else {
+      // Em modo de adição, inicializar quantidade com 1
+      _quantidadeController.text = '1';
+    }
+  }
+
+  Future<void> _loadExistingData() async {
+    if (!widget.editMode || widget.existingItem == null) return;
+
+    try {
+      // Carregar produto
+      final produtosAsync = await ref.read(produtosListProvider.future);
+      final produto = produtosAsync.firstWhere(
+        (p) => p.idProduto == widget.existingItem!.idProduto,
+      );
+
+      if (mounted) {
+        setState(() => _selectedProduto = produto);
+      }
+
+      // Carregar cor
+      final coresAsync = await ref.read(
+        coresByProdutoProvider(produto.idProduto).future,
+      );
+      final cor = coresAsync.firstWhere(
+        (c) => c.idCor == widget.existingItem!.idCor,
+      );
+
+      if (mounted) {
+        setState(() => _selectedCor = cor);
+      }
+
+      // Carregar tamanho
+      final tamanhosAsync = await ref.read(tamanhosListProvider.future);
+      final tamanho = tamanhosAsync.firstWhere(
+        (t) => t.idTamanho == widget.existingItem!.idTamanho,
+      );
+
+      if (mounted) {
+        setState(() => _selectedTamanho = tamanho);
+      }
+    } catch (e) {
+      if (mounted) {
+        _showError('Erro ao carregar dados: $e');
+      }
+    }
+  }
+
   @override
   void dispose() {
     _quantidadeController.dispose();
@@ -333,35 +496,65 @@ class _AddProdutoDialogState extends ConsumerState<_AddProdutoDialog> {
   }
 
   void _onProductSelected(Produto produto) {
+    final bool isProdutoDiferente =
+        _selectedProduto?.idProduto != produto.idProduto;
+
     setState(() {
       _selectedProduto = produto;
-      _selectedCor = null; // Resetar cor ao mudar produto
-      _selectedTamanho = null; // Resetar tamanho
-      _precoController.text = produto.precoProduto?.toString() ?? '';
+
+      // Se mudou de produto, limpar cor e tamanho (cores são diferentes por produto)
+      if (isProdutoDiferente) {
+        _selectedCor = null;
+        _selectedTamanho = null;
+
+        print('🔄 PRODUTO MUDOU: ${produto.codigoProduto}');
+        print('   → Limpando cor e tamanho');
+
+        // Preencher preço do novo produto
+        if (produto.precoProduto != null) {
+          _precoController.text = produto.precoProduto.toString();
+          print('   → Preço: ${produto.precoProduto}');
+        }
+      } else {
+        print('✅ MESMO PRODUTO: ${produto.codigoProduto}');
+        print('   → Mantendo cor e tamanho');
+      }
     });
   }
 
   void _onColorSelected(Cor cor) {
+    print('🔍 DEBUG: Cor selecionada');
+    print('  ID: ${cor.idCor}');
+    print('  Código: ${cor.codigoCor}');
+    print('  Designação: ${cor.designacaoCor}');
+
     setState(() {
       _selectedCor = cor;
+      print('✅ Estado atualizado: _selectedCor = ${_selectedCor?.codigoCor}');
     });
   }
 
   void _onSizeSelected(Tamanho tamanho) {
+    print('🔍 DEBUG: Tamanho selecionado');
+    print('  ID: ${tamanho.idTamanho}');
+    print('  Código: ${tamanho.codigoTamanho}');
+    print('  Designação: ${tamanho.designacaoTamanho}');
+
     setState(() {
       _selectedTamanho = tamanho;
+      print(
+        '✅ Estado atualizado: _selectedTamanho = ${_selectedTamanho?.codigoTamanho}',
+      );
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Apenas buscar cores se produto estiver selecionado
     final coresAsync =
         _selectedProduto != null
             ? ref.watch(coresByProdutoProvider(_selectedProduto!.idProduto))
             : null;
     final tamanhosAsync = ref.watch(tamanhosListProvider);
-
     return Dialog(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 600),
@@ -377,10 +570,15 @@ class _AddProdutoDialogState extends ConsumerState<_AddProdutoDialog> {
                   // Título
                   Row(
                     children: [
-                      const Icon(Icons.add_shopping_cart, size: 28),
+                      Icon(
+                        widget.editMode ? Icons.edit : Icons.add_shopping_cart,
+                        size: 28,
+                      ),
                       const SizedBox(width: 12),
                       Text(
-                        'Adicionar Produto',
+                        widget.editMode
+                            ? 'Editar Produto'
+                            : 'Adicionar Produto',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ],
@@ -388,11 +586,27 @@ class _AddProdutoDialogState extends ConsumerState<_AddProdutoDialog> {
                   const Divider(height: 32),
 
                   // Product Search Field
-                  ProductSearchField(onProductSelected: _onProductSelected),
+                  ProductSearchField(
+                    onProductSelected: _onProductSelected,
+                    initialValue: widget.existingItem?.codigoProduto,
+                  ),
                   const SizedBox(height: UIConstants.spacingM),
 
-                  // Color Search Field - só mostra se produto selecionado
-                  if (coresAsync != null)
+                  // Color Search Field
+                  const SizedBox(height: UIConstants.spacingM),
+
+                  // Color Search Field - SEMPRE VISÍVEL
+                  if (coresAsync == null)
+                    // Produto não selecionado - campo desabilitado
+                    ColorSearchField(
+                      key: const ValueKey('color-disabled'),
+                      cores: const [],
+                      onColorSelected: (_) {},
+                      enabled: false,
+                      initialValue: null,
+                    )
+                  else
+                    // Produto selecionado - carregar cores
                     coresAsync.when(
                       data: (cores) {
                         if (cores.isEmpty) {
@@ -418,6 +632,9 @@ class _AddProdutoDialogState extends ConsumerState<_AddProdutoDialog> {
                           cores: cores,
                           onColorSelected: _onColorSelected,
                           enabled: true,
+                          initialValue:
+                              _selectedCor?.codigoCor ??
+                              widget.existingItem?.codigoCor,
                         );
                       },
                       loading:
@@ -440,9 +657,7 @@ class _AddProdutoDialogState extends ConsumerState<_AddProdutoDialog> {
                                 children: [
                                   const Icon(Icons.error, color: Colors.red),
                                   const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text('Erro ao carregar cores: $e'),
-                                  ),
+                                  Expanded(child: Text('Erro: $e')),
                                 ],
                               ),
                             ),
@@ -452,58 +667,69 @@ class _AddProdutoDialogState extends ConsumerState<_AddProdutoDialog> {
                   if (_selectedProduto != null && coresAsync != null)
                     const SizedBox(height: UIConstants.spacingM),
 
-                  // Size Search Field
-                  tamanhosAsync.when(
-                    data: (tamanhos) {
-                      if (tamanhos.isEmpty) {
-                        return const Card(
-                          color: Colors.grey,
-                          child: Padding(
-                            padding: EdgeInsets.all(12.0),
-                            child: Text('Nenhum tamanho disponível'),
-                          ),
+                  // Size Search Field - SEMPRE VISÍVEL
+                  if (_selectedProduto == null)
+                    // Produto não selecionado - campo desabilitado
+                    SizeSearchField(
+                      key: const ValueKey('size-disabled'),
+                      tamanhos: const [],
+                      onSizeSelected: (_) {},
+                      enabled: false,
+                      initialValue: null,
+                    )
+                  else
+                    // Produto selecionado - carregar tamanhos
+                    tamanhosAsync.when(
+                      data: (tamanhos) {
+                        if (tamanhos.isEmpty) {
+                          return const Card(
+                            color: Colors.grey,
+                            child: Padding(
+                              padding: EdgeInsets.all(12.0),
+                              child: Text('Nenhum tamanho disponível'),
+                            ),
+                          );
+                        }
+                        return SizeSearchField(
+                          tamanhos: tamanhos,
+                          onSizeSelected: _onSizeSelected,
+                          enabled: true,
+                          initialValue:
+                              _selectedTamanho?.codigoTamanho ??
+                              widget.existingItem?.codigoTamanho,
                         );
-                      }
-                      return SizeSearchField(
-                        tamanhos: tamanhos,
-                        onSizeSelected: _onSizeSelected,
-                        enabled: true,
-                      );
-                    },
-                    loading:
-                        () => const Column(
-                          children: [
-                            LinearProgressIndicator(),
-                            SizedBox(height: 8),
-                            Text(
-                              'Carregando tamanhos...',
-                              style: TextStyle(fontSize: 12),
-                            ),
-                          ],
-                        ),
-                    error:
-                        (e, __) => Card(
-                          color: Colors.red.shade100,
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.error, color: Colors.red),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text('Erro ao carregar tamanhos: $e'),
-                                ),
-                              ],
+                      },
+                      loading:
+                          () => const Column(
+                            children: [
+                              LinearProgressIndicator(),
+                              SizedBox(height: 8),
+                              Text(
+                                'Carregando tamanhos...',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ],
+                          ),
+                      error:
+                          (e, __) => Card(
+                            color: Colors.red.shade100,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.error, color: Colors.red),
+                                  const SizedBox(width: 8),
+                                  Expanded(child: Text('Erro: $e')),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                  ),
+                    ),
                   const SizedBox(height: UIConstants.spacingM),
 
-                  // Quantidade e Preço lado a lado
+                  // Quantidade e Preço
                   Row(
                     children: [
-                      // Quantidade
                       Expanded(
                         flex: 1,
                         child: TextFormField(
@@ -518,7 +744,6 @@ class _AddProdutoDialogState extends ConsumerState<_AddProdutoDialog> {
                         ),
                       ),
                       const SizedBox(width: UIConstants.spacingM),
-                      // Preço
                       Expanded(
                         flex: 2,
                         child: TextFormField(
@@ -536,6 +761,24 @@ class _AddProdutoDialogState extends ConsumerState<_AddProdutoDialog> {
                       ),
                     ],
                   ),
+
+                  // Checkbox manter aberto
+                  if (!widget.editMode) ...[
+                    const SizedBox(height: UIConstants.spacingM),
+                    CheckboxListTile(
+                      value: _keepDialogOpen,
+                      onChanged:
+                          (value) =>
+                              setState(() => _keepDialogOpen = value ?? true),
+                      title: const Text('Manter janela aberta após adicionar'),
+                      subtitle: const Text(
+                        'Permite adicionar vários produtos seguidos',
+                      ),
+                      dense: true,
+                      controlAffinity: ListTileControlAffinity.leading,
+                    ),
+                  ],
+
                   const SizedBox(height: UIConstants.spacingXL),
 
                   // Botões
@@ -551,9 +794,11 @@ class _AddProdutoDialogState extends ConsumerState<_AddProdutoDialog> {
                       const SizedBox(width: UIConstants.spacingM),
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: _handleAdd,
-                          icon: const Icon(Icons.check),
-                          label: const Text('Adicionar'),
+                          onPressed: _handleSave,
+                          icon: Icon(widget.editMode ? Icons.check : Icons.add),
+                          label: Text(
+                            widget.editMode ? 'Guardar' : 'Adicionar',
+                          ),
                         ),
                       ),
                     ],
@@ -567,10 +812,9 @@ class _AddProdutoDialogState extends ConsumerState<_AddProdutoDialog> {
     );
   }
 
-  void _handleAdd() {
+  void _handleSave() {
     if (!_formKey.currentState!.validate()) return;
 
-    // Validações explícitas com mensagens claras
     if (_selectedProduto == null) {
       _showError('Selecione um produto');
       return;
@@ -604,18 +848,48 @@ class _AddProdutoDialogState extends ConsumerState<_AddProdutoDialog> {
       total: preco * quantidade,
     );
 
-    ref.read(carrinhoProvider.notifier).addItem(item);
+    if (widget.editMode) {
+      ref.read(carrinhoProvider.notifier).updateItem(widget.editIndex!, item);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✓ ${item.codigoProduto} atualizado!'),
+          backgroundColor: Colors.blue,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      Navigator.pop(context);
+    } else {
+      ref.read(carrinhoProvider.notifier).addItem(item);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✓ ${item.codigoProduto} adicionado!'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 1),
+        ),
+      );
 
-    // Feedback de sucesso
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${item.codigoProduto} adicionado!'),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 1),
-      ),
-    );
+      if (_keepDialogOpen) {
+        _clearFields();
+      } else {
+        Navigator.pop(context);
+      }
+    }
+  }
 
-    Navigator.pop(context);
+  void _clearFields() {
+    // NÃO limpar nada!
+    // Manter produto, cor, tamanho, quantidade e preço
+    // para facilitar adicionar linhas seguidas com mesmos valores
+
+    print('📦 Produto adicionado - Mantendo TODOS os valores');
+    print('   → Produto: ${_selectedProduto?.codigoProduto}');
+    print('   → Cor: ${_selectedCor?.codigoCor}');
+    print('   → Tamanho: ${_selectedTamanho?.codigoTamanho}');
+    print('   → Quantidade: ${_quantidadeController.text}');
+    print('   → Preço: ${_precoController.text}');
+
+    // Apenas reset do form state (não limpa valores)
+    setState(() {});
   }
 
   void _showError(String message) {
@@ -630,6 +904,10 @@ class _AddProdutoDialogState extends ConsumerState<_AddProdutoDialog> {
 }
 
 // ============= STEP 3: FINALIZAR =============
+
+// ============================================================================
+// STEP 3: FINALIZAR (COM TÍTULO E PREENCHIMENTO AUTOMÁTICO)
+// ============================================================================
 
 class _FinalizarStep extends ConsumerStatefulWidget {
   const _FinalizarStep();
@@ -654,6 +932,150 @@ class _FinalizarStepState extends ConsumerState<_FinalizarStep> {
   bool _isSubmitting = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Preencher dados do cliente automaticamente quando entrar neste passo
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _preencherDadosCliente();
+    });
+  }
+
+  void _preencherDadosCliente() {
+    final carrinho = ref.read(carrinhoProvider);
+    final cliente = carrinho.cliente;
+
+    if (kDebugMode) {
+      print('═══════════════════════════════════════════════════');
+      print('🔍 DEBUG: _preencherDadosCliente()');
+      print('Cliente existe: ${cliente != null}');
+    }
+
+    if (cliente != null) {
+      if (kDebugMode) {
+        print('─────────────────────────────────────────────────');
+        print('📦 Dados RECEBIDOS do cliente:');
+        print('  idCliente: ${cliente.idCliente}');
+        print('  nomeCliente: "${cliente.nomeCliente}"');
+        print('  ruaCliente: "${cliente.ruaCliente}"');
+        print('  localidadeCliente: "${cliente.localidadeCliente}"');
+        print('  cpostalCliente: "${cliente.cpostalCliente}"');
+        print('  nomeContactoCliente: "${cliente.nomeContactoCliente}"');
+        print(
+          '  telefoneContactoCliente: "${cliente.telefoneContactoCliente}"',
+        );
+        print('  telefoneCliente: "${cliente.telefoneCliente}"');
+        print('─────────────────────────────────────────────────');
+      }
+
+      setState(() {
+        // Preencher endereço (Rua)
+        if (cliente.ruaCliente != null && cliente.ruaCliente!.isNotEmpty) {
+          _enderecoEntrega1Controller.text = cliente.ruaCliente!;
+          if (kDebugMode) {
+            print('✅ Preencheu RUA: "${cliente.ruaCliente}"');
+          }
+        } else {
+          if (kDebugMode) {
+            print('❌ RUA está vazia ou null');
+          }
+        }
+
+        // Preencher localidade
+        if (cliente.localidadeCliente != null &&
+            cliente.localidadeCliente!.isNotEmpty) {
+          _enderecoEntrega3Controller.text = cliente.localidadeCliente!;
+          if (kDebugMode) {
+            print('✅ Preencheu LOCALIDADE: "${cliente.localidadeCliente}"');
+          }
+        } else {
+          if (kDebugMode) {
+            print('❌ LOCALIDADE está vazia ou null');
+          }
+        }
+
+        // Preencher código postal
+        if (cliente.cpostalCliente != null &&
+            cliente.cpostalCliente!.isNotEmpty) {
+          _cpostalEntregaController.text = cliente.cpostalCliente!;
+          if (kDebugMode) {
+            print('✅ Preencheu CÓDIGO POSTAL: "${cliente.cpostalCliente}"');
+          }
+        } else {
+          if (kDebugMode) {
+            print('❌ CÓDIGO POSTAL está vazio ou null');
+          }
+        }
+
+        // Preencher nome do contacto (usar campo específico de contacto)
+        if (cliente.nomeContactoCliente != null &&
+            cliente.nomeContactoCliente!.isNotEmpty) {
+          _nomeContactoController.text = cliente.nomeContactoCliente!;
+          if (kDebugMode) {
+            print(
+              '✅ Preencheu NOME CONTACTO (específico): "${cliente.nomeContactoCliente}"',
+            );
+          }
+        } else if (cliente.nomeCliente != null &&
+            cliente.nomeCliente!.isNotEmpty) {
+          // Fallback: usar nome do cliente se não tiver contacto específico
+          _nomeContactoController.text = cliente.nomeCliente!;
+          if (kDebugMode) {
+            print(
+              '✅ Preencheu NOME CONTACTO (fallback - nomeCliente): "${cliente.nomeCliente}"',
+            );
+          }
+        } else {
+          if (kDebugMode) {
+            print('❌ NOME CONTACTO está vazio ou null');
+          }
+        }
+
+        // Preencher telefone do contacto (usar campo específico de contacto)
+        if (cliente.telefoneContactoCliente != null &&
+            cliente.telefoneContactoCliente!.isNotEmpty) {
+          _telefoneContactoController.text = cliente.telefoneContactoCliente!;
+          if (kDebugMode) {
+            print(
+              '✅ Preencheu TELEFONE (específico): "${cliente.telefoneContactoCliente}"',
+            );
+          }
+        } else if (cliente.telefoneCliente != null &&
+            cliente.telefoneCliente!.isNotEmpty) {
+          // Fallback: usar telefone do cliente se não tiver telefone de contacto específico
+          _telefoneContactoController.text = cliente.telefoneCliente!;
+          if (kDebugMode) {
+            print(
+              '✅ Preencheu TELEFONE (fallback - telefoneCliente): "${cliente.telefoneCliente}"',
+            );
+          }
+        } else {
+          if (kDebugMode) {
+            print('❌ TELEFONE está vazio ou null');
+          }
+        }
+      });
+
+      if (kDebugMode) {
+        print('─────────────────────────────────────────────────');
+        print('📝 Controllers APÓS preenchimento:');
+        print('  Rua: "${_enderecoEntrega1Controller.text}"');
+        print('  Localidade: "${_enderecoEntrega3Controller.text}"');
+        print('  Código Postal: "${_cpostalEntregaController.text}"');
+        print('  Nome Contacto: "${_nomeContactoController.text}"');
+        print('  Telefone: "${_telefoneContactoController.text}"');
+      }
+    } else {
+      if (kDebugMode) {
+        print('❌ Cliente é NULL!');
+      }
+    }
+
+    if (kDebugMode) {
+      print('═══════════════════════════════════════════════════');
+    }
+  }
+
+  @override
   void dispose() {
     _dataEntregaController.dispose();
     _enderecoEntrega1Controller.dispose();
@@ -670,14 +1092,16 @@ class _FinalizarStepState extends ConsumerState<_FinalizarStep> {
   Future<void> _selectDate() async {
     final date = await showDatePicker(
       context: context,
-      initialDate: DateTime.now().add(const Duration(days: 7)),
+      initialDate: _selectedDate ?? DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
+
     if (date != null) {
       setState(() {
         _selectedDate = date;
-        _dataEntregaController.text = FormatUtils.formatDate(date);
+        _dataEntregaController.text =
+            '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
       });
     }
   }
@@ -699,38 +1123,59 @@ class _FinalizarStepState extends ConsumerState<_FinalizarStep> {
         children: [
           // Resumo
           Card(
-            color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
             child: Padding(
               padding: const EdgeInsets.all(UIConstants.spacingM),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Resumo da Encomenda',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Resumo da Encomenda',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Chip(
+                        label: Text(
+                          '${carrinho.itens.length} ${carrinho.itens.length == 1 ? 'item' : 'itens'}',
+                        ),
+                        backgroundColor: Colors.blue.shade100,
+                      ),
+                    ],
                   ),
                   const Divider(),
-                  // E atualizar as chamadas para:
-                  _buildInfoRow(
-                    Icons.person,
-                    'Cliente',
-                    carrinho.cliente!.nomeCliente,
-                  ),
-                  _buildInfoRow(
-                    Icons.inventory,
-                    'Itens',
-                    '${carrinho.totalItens}',
-                  ),
-                  _buildInfoRow(
-                    Icons.euro,
-                    'Valor Total',
-                    FormatUtils.formatCurrency(carrinho.valorTotal),
-                    valueStyle: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: Colors.green,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: Row(
+                      children: [
+                        Icon(Icons.person, size: 20, color: Colors.grey[600]),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Cliente: ',
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        Expanded(
+                          child: Text(
+                            '${carrinho.cliente!.codigoCliente} - ${carrinho.cliente!.nomeCliente}',
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        const Text(
+                          'Total: ',
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        Text(
+                          '€${carrinho.valorTotal.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -739,114 +1184,141 @@ class _FinalizarStepState extends ConsumerState<_FinalizarStep> {
           ),
           const SizedBox(height: UIConstants.spacingL),
 
-          // Data de Entrega
-          TextFormField(
-            controller: _dataEntregaController,
-            decoration: const InputDecoration(
-              labelText: 'Data de Entrega Prevista *',
-              prefixIcon: Icon(Icons.calendar_today),
-              helperText: 'Clique para selecionar',
-            ),
-            readOnly: true,
-            onTap: _selectDate,
-            validator: (value) => Validators.required(value, 'Data de entrega'),
-          ),
-          const SizedBox(height: UIConstants.spacingM),
-
-          // Endereço
-          TextFormField(
-            controller: _enderecoEntrega1Controller,
-            decoration: const InputDecoration(
-              labelText: 'Endereço Linha 1',
-              prefixIcon: Icon(Icons.home),
-            ),
-          ),
-          const SizedBox(height: UIConstants.spacingM),
-
-          TextFormField(
-            controller: _enderecoEntrega2Controller,
-            decoration: const InputDecoration(
-              labelText: 'Endereço Linha 2',
-              prefixIcon: Icon(Icons.home),
-            ),
-          ),
-          const SizedBox(height: UIConstants.spacingM),
-
+          // ========== TÍTULO: DADOS DE ENTREGA ==========
           Row(
             children: [
-              Expanded(
-                flex: 2,
-                child: TextFormField(
-                  controller: _enderecoEntrega3Controller,
-                  decoration: const InputDecoration(
-                    labelText: 'Localidade',
-                    prefixIcon: Icon(Icons.location_city),
-                  ),
-                ),
+              const Icon(Icons.local_shipping, color: Colors.blue),
+              const SizedBox(width: 8),
+              const Text(
+                'Dados de Entrega',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(width: UIConstants.spacingM),
-              Expanded(
-                flex: 1,
-                child: TextFormField(
-                  controller: _cpostalEntregaController,
-                  decoration: const InputDecoration(
-                    labelText: 'Cód. Postal',
-                    prefixIcon: Icon(Icons.mail),
-                  ),
-                ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: _preencherDadosCliente,
+                icon: const Icon(Icons.refresh, size: 20),
+                label: const Text('Repor dados'),
               ),
             ],
           ),
+          const SizedBox(height: 8),
+          const Text(
+            'Os dados foram preenchidos automaticamente com as informações do cliente',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
           const SizedBox(height: UIConstants.spacingM),
 
-          // Contacto
+          // Layout em 2 colunas
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                flex: 2,
-                child: TextFormField(
-                  controller: _nomeContactoController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nome Contacto',
-                    prefixIcon: Icon(Icons.person_outline),
-                  ),
-                ),
-              ),
-              const SizedBox(width: UIConstants.spacingM),
+              // ========== COLUNA 1: ENDEREÇO E REFERÊNCIA ==========
               Expanded(
                 flex: 1,
-                child: TextFormField(
-                  controller: _telefoneContactoController,
-                  decoration: const InputDecoration(
-                    labelText: 'Telefone',
-                    prefixIcon: Icon(Icons.phone),
-                  ),
-                  keyboardType: TextInputType.phone,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Rua
+                    TextFormField(
+                      controller: _enderecoEntrega1Controller,
+                      decoration: const InputDecoration(
+                        labelText: 'Rua',
+                        prefixIcon: Icon(Icons.home),
+                      ),
+                    ),
+                    const SizedBox(height: UIConstants.spacingM),
+
+                    // Localidade
+                    TextFormField(
+                      controller: _enderecoEntrega3Controller,
+                      decoration: const InputDecoration(
+                        labelText: 'Localidade',
+                        prefixIcon: Icon(Icons.location_city),
+                      ),
+                    ),
+                    const SizedBox(height: UIConstants.spacingM),
+
+                    // Código Postal
+                    TextFormField(
+                      controller: _cpostalEntregaController,
+                      decoration: const InputDecoration(
+                        labelText: 'Código Postal',
+                        prefixIcon: Icon(Icons.mail),
+                      ),
+                    ),
+                    const SizedBox(height: UIConstants.spacingM),
+
+                    // Referência Cliente
+                    TextFormField(
+                      controller: _referenciaClienteController,
+                      decoration: const InputDecoration(
+                        labelText: 'Referência do Cliente',
+                        prefixIcon: Icon(Icons.tag),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(width: UIConstants.spacingL),
+
+              // ========== COLUNA 2: DATA E CONTACTO ==========
+              Expanded(
+                flex: 1,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Data de Entrega
+                    TextFormField(
+                      controller: _dataEntregaController,
+                      decoration: const InputDecoration(
+                        labelText: 'Data de Entrega Prevista *',
+                        prefixIcon: Icon(Icons.calendar_today),
+                        helperText: 'Clique para selecionar',
+                      ),
+                      readOnly: true,
+                      onTap: _selectDate,
+                      validator:
+                          (value) =>
+                              Validators.required(value, 'Data de entrega'),
+                    ),
+                    const SizedBox(height: UIConstants.spacingM),
+
+                    // Nome Contacto
+                    TextFormField(
+                      controller: _nomeContactoController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nome Contacto',
+                        prefixIcon: Icon(Icons.person_outline),
+                      ),
+                    ),
+                    const SizedBox(height: UIConstants.spacingM),
+
+                    // Telefone Contacto
+                    TextFormField(
+                      controller: _telefoneContactoController,
+                      decoration: const InputDecoration(
+                        labelText: 'Telefone Contacto',
+                        prefixIcon: Icon(Icons.phone),
+                      ),
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: UIConstants.spacingM),
+
+                    // Observações
+                    TextFormField(
+                      controller: _observacoesController,
+                      decoration: const InputDecoration(
+                        labelText: 'Observações',
+                        prefixIcon: Icon(Icons.notes),
+                        hintText: 'Informações adicionais...',
+                      ),
+                      maxLines: 3,
+                    ),
+                  ],
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: UIConstants.spacingM),
-
-          // Referência
-          TextFormField(
-            controller: _referenciaClienteController,
-            decoration: const InputDecoration(
-              labelText: 'Referência do Cliente',
-              prefixIcon: Icon(Icons.tag),
-            ),
-          ),
-          const SizedBox(height: UIConstants.spacingM),
-
-          // Observações
-          TextFormField(
-            controller: _observacoesController,
-            decoration: const InputDecoration(
-              labelText: 'Observações',
-              prefixIcon: Icon(Icons.notes),
-              hintText: 'Informações adicionais sobre a encomenda...',
-            ),
-            maxLines: 3,
           ),
           const SizedBox(height: UIConstants.spacingXL),
 
@@ -872,28 +1344,6 @@ class _FinalizarStepState extends ConsumerState<_FinalizarStep> {
               _isSubmitting ? 'Criando...' : 'Criar Encomenda',
               style: const TextStyle(fontSize: 16),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(
-    IconData icon,
-    String label,
-    String? value, {
-    TextStyle? valueStyle,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: Colors.grey[600]),
-          const SizedBox(width: 8),
-          Text('$label: ', style: const TextStyle(fontWeight: FontWeight.w500)),
-          Text(
-            value ?? '-', // ← ADICIONAR null safety
-            style: valueStyle,
           ),
         ],
       ),
@@ -930,36 +1380,46 @@ class _FinalizarStepState extends ConsumerState<_FinalizarStep> {
             carrinho.itens.map((item) {
               return CreateEncomendaDetalheDto(
                 idProduto: item.idProduto,
+                designacaoProduto: item.designacaoProduto,
                 idCor: item.idCor,
                 idTamanho: item.idTamanho,
                 quantidade: item.quantidade,
                 preco: item.preco,
+                total: item.preco * item.quantidade,
               );
             }).toList(),
       );
 
-      final encomenda = await repository.createEncomenda(dto);
+      if (kDebugMode) {
+        print("DTO ENCOMENDA:");
+        print(dto.toJson());
+
+        print("DTO DETALHE ENCOMENDA:");
+        print(dto.detalhes.first.toJson());
+      }
+
+      await repository.createEncomenda(dto);
 
       if (mounted) {
+        // Limpar carrinho
         ref.read(carrinhoProvider.notifier).clear();
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '✓ Encomenda #${encomenda.idEncomenda} criada com sucesso!',
-            ),
+          const SnackBar(
+            content: Text('Encomenda criada com sucesso!'),
             backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
           ),
         );
-        Navigator.of(context).popUntil((route) => route.isFirst);
+
+        // Voltar para lista de encomendas
+        Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString().replaceAll('Exception: ', '')),
+            content: Text('Erro ao criar encomenda: $e'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
           ),
         );
       }

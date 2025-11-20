@@ -183,25 +183,29 @@ Map<String, dynamic> _$CreateEncomendaDtoToJson(CreateEncomendaDto instance) =>
       'telefoneContacto': instance.telefoneContacto,
       'referenciaCliente': instance.referenciaCliente,
       'observacoes': instance.observacoes,
-      'detalhes': instance.detalhes,
+      'detalhes': instance.detalhes.map((e) => e.toJson()).toList(),
     };
 
 CreateEncomendaDetalheDto _$CreateEncomendaDetalheDtoFromJson(
   Map<String, dynamic> json,
 ) => CreateEncomendaDetalheDto(
   idProduto: (json['idProduto'] as num).toInt(),
+  designacaoProduto: json['designacaoProduto'] as String?,
   idCor: (json['idCor'] as num).toInt(),
   idTamanho: (json['idTamanho'] as num).toInt(),
   quantidade: (json['quantidade'] as num).toInt(),
   preco: (json['preco'] as num).toDouble(),
+  total: (json['total'] as num).toDouble(),
 );
 
 Map<String, dynamic> _$CreateEncomendaDetalheDtoToJson(
   CreateEncomendaDetalheDto instance,
 ) => <String, dynamic>{
   'idProduto': instance.idProduto,
+  'designacaoProduto': instance.designacaoProduto,
   'idCor': instance.idCor,
   'idTamanho': instance.idTamanho,
   'quantidade': instance.quantidade,
   'preco': instance.preco,
+  'total': instance.total,
 };

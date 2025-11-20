@@ -1,0 +1,15 @@
+class UIConstants {
+  static const double spaceXS = 4;
+  static const double spaceS = 8;
+  static const double spaceM = 12;
+  static const double spaceL = 16;
+  static const double spaceXL = 24;
+  static const double spaceXXL = 32;
+
+  static const double fontS = 14;
+  static const double fontM = 16;
+  static const double fontL = 18;
+  static const double fontXL = 22;
+
+  static const double radiusL = 0; // Sem arredondamento
+}

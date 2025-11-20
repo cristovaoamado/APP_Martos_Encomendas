@@ -139,7 +139,7 @@ class EncomendaDetalhe {
   factory EncomendaDetalhe.fromJson(Map<String, dynamic> json) =>
       _$EncomendaDetalheFromJson(json);
   Map<String, dynamic> toJson() => _$EncomendaDetalheToJson(this);
-  
+
   EncomendaDetalhe copyWith({
     int? idEncomendaDetalhe,
     int? idEncomenda,
@@ -175,7 +175,7 @@ class EncomendaDetalhe {
   }
 }
 
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class CreateEncomendaDto {
   final int idCliente;
   final DateTime dataEntregaPrevista;
@@ -211,17 +211,21 @@ class CreateEncomendaDto {
 @JsonSerializable()
 class CreateEncomendaDetalheDto {
   final int idProduto;
+  final String? designacaoProduto; // <-- AGORA OPCIONAL
   final int idCor;
   final int idTamanho;
   final int quantidade;
   final double preco;
+  final double total;
 
   CreateEncomendaDetalheDto({
     required this.idProduto,
+    this.designacaoProduto,   // <-- SEM required
     required this.idCor,
     required this.idTamanho,
     required this.quantidade,
     required this.preco,
+    required this.total,
   });
 
   factory CreateEncomendaDetalheDto.fromJson(Map<String, dynamic> json) =>
