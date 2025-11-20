@@ -1,29 +1,30 @@
+import 'package:encomendas_app/core/theme/app_theme.dart';
+import 'package:encomendas_app/presentation/screens/auth/login_screen.dart';
+import 'package:encomendas_app/presentation/screens/encomenda/create_encomenda_screen.dart';
+import 'package:encomendas_app/presentation/screens/encomenda/encomendas_list_screen.dart';
+import 'package:encomendas_app/presentation/screens/home/home_screen.dart';
+import 'package:encomendas_app/presentation/screens/settings/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'services/storage_service.dart';
+
 import 'data/providers/providers.dart';
-import 'presentation/screens/auth/login_screen.dart';
-import 'presentation/screens/home/home_screen.dart';
-import 'presentation/screens/encomenda/encomendas_list_screen.dart';
-import 'presentation/screens/encomenda/create_encomenda_screen.dart';
-import 'presentation/screens/encomenda/encomenda_detail_screen.dart';
-import 'core/theme/app_theme.dart';
+import 'services/storage_service.dart';
+import 'presentation/screens/startup/startup_screen.dart';
 
 void main() async {
-  // Garantir inicialização dos bindings do Flutter
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Inicializar SharedPreferences
-  final sharedPreferences = await SharedPreferences.getInstance();
-  
-  // Criar instância do StorageService
-  final storageService = StorageService(sharedPreferences);
+
+  // ✅ Inicializar SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
+
+  // ✅ Criar StorageService
+  final storageService = StorageService(prefs);
 
   runApp(
     ProviderScope(
       overrides: [
-        // Sobrescrever o storageServiceProvider com a instância real
+        // ✅ Sobrescrever provider com instância real
         storageServiceProvider.overrideWithValue(storageService),
       ],
       child: const MyApp(),
@@ -31,71 +32,22 @@ void main() async {
   );
 }
 
-class MyApp extends ConsumerWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Gestão de Encomendas',
+      title: 'Encomendas App',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      initialRoute: '/login',
+      home: const StartupScreen(),
       routes: {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
-        '/encomendas': (context) => const EncomendasListScreen(),
+        '/settings': (context) => const SettingsScreen(),
+        '/encomenda/list': (context) => const EncomendasListScreen(),
         '/encomenda/create': (context) => const CreateEncomendaScreen(),
-      },
-      onGenerateRoute: (settings) {
-        // Rota dinâmica para detalhes da encomenda
-        if (settings.name?.startsWith('/encomenda/') == true) {
-          final uri = Uri.parse(settings.name!);
-          if (uri.pathSegments.length == 2 && uri.pathSegments[0] == 'encomenda') {
-            final id = int.tryParse(uri.pathSegments[1]);
-            if (id != null) {
-              return MaterialPageRoute(
-                builder: (context) => EncomendaDetailScreen(idEncomenda: id),
-                settings: settings,
-              );
-            }
-          }
-        }
-        return null;
-      },
-      onUnknownRoute: (settings) {
-        // Rota de fallback caso nenhuma rota seja encontrada
-        return MaterialPageRoute(
-          builder: (context) => Scaffold(
-            appBar: AppBar(title: const Text('Página não encontrada')),
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Página não encontrada',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    settings.name ?? 'Rota desconhecida',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: () => Navigator.of(context).pushReplacementNamed('/home'),
-                    icon: const Icon(Icons.home),
-                    label: const Text('Voltar ao início'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
       },
     );
   }

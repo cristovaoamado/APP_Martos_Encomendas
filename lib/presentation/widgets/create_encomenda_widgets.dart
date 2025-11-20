@@ -1,11 +1,11 @@
 import 'package:encomendas_app/core/utils/format_utils.dart';
+import 'package:encomendas_app/data/providers/lookup_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/models/encomenda.dart';
 import '../../../data/models/produto.dart';
 import '../../../data/models/cor.dart';
 import '../../../data/models/tamanho.dart';
-import '../../data/providers/lookup_providers.dart.backup';
 import '../../../data/providers/providers.dart';
 import '../../../core/constants/ui_constants.dart';
 import '../../../core/utils/validators.dart';

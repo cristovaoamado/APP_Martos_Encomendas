@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/ui_constants.dart';
+import '../../../data/providers/auth_provider.dart';
 import '../encomenda/encomendas_list_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -8,8 +9,6 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-
-
     // Definindo largura fixa e altura igual para todos
     const cardWidth = 220.0;
     const cardHeight = 220.0;
@@ -24,13 +23,13 @@ class HomeScreen extends ConsumerWidget {
             runSpacing: 16, // espaço entre linhas
             alignment: WrapAlignment.center,
             children: [
-              // cada card com largura limitada e altura automática
+              // ========== ENCOMENDAS ==========
               ConstrainedBox(
                 constraints: const BoxConstraints(
-                  maxWidth: cardWidth, // largura máxima do card
+                  maxWidth: cardWidth,
                   minWidth: cardWidth,
                   maxHeight: cardHeight,
-                  minHeight: cardHeight
+                  minHeight: cardHeight,
                 ),
                 child: _MenuCard(
                   icon: Icons.list_alt,
@@ -47,54 +46,106 @@ class HomeScreen extends ConsumerWidget {
                   },
                 ),
               ),
+
+              // ========== CRIAR ==========
               ConstrainedBox(
                 constraints: const BoxConstraints(
-                  maxWidth: cardWidth, // largura máxima do card
+                  maxWidth: cardWidth,
                   minWidth: cardWidth,
                   maxHeight: cardHeight,
-                  minHeight: cardHeight
-                  ),
+                  minHeight: cardHeight,
+                ),
                 child: _MenuCard(
                   icon: Icons.add_box,
                   title: 'Criar',
                   subtitle: '',
                   color: Colors.green,
-                  onTap:
-                      () => Navigator.pushNamed(context, '/encomenda/create'),
+                  onTap: () => Navigator.pushNamed(context, '/encomenda/create'),
                 ),
               ),
+
+              // ========== PRODUÇÃO (COMENTADO - usar mais tarde) ==========
+              // ConstrainedBox(
+              //   constraints: const BoxConstraints(
+              //     maxWidth: cardWidth,
+              //     minWidth: cardWidth,
+              //     maxHeight: cardHeight,
+              //     minHeight: cardHeight,
+              //   ),
+              //   child: _MenuCard(
+              //     icon: Icons.factory,
+              //     title: 'Produção',
+              //     subtitle: '',
+              //     color: Colors.orange,
+              //     onTap: () => Navigator.pushNamed(context, '/encomenda/producao'),
+              //   ),
+              // ),
+
+              // ========== CONFIGURAÇÕES ==========
               ConstrainedBox(
                 constraints: const BoxConstraints(
-                  maxWidth: cardWidth, // largura máxima do card
+                  maxWidth: cardWidth,
                   minWidth: cardWidth,
                   maxHeight: cardHeight,
-                  minHeight: cardHeight
-                  ),
-                child: _MenuCard(
-                  icon: Icons.factory,
-                  title: 'Produção',
-                  subtitle: '',
-                  color: Colors.orange,
-                  onTap:
-                      () => Navigator.pushNamed(context, '/encomenda/producao'),
+                  minHeight: cardHeight,
                 ),
-              ),
-              ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: cardWidth, // largura máxima do card
-                  minWidth: cardWidth,
-                  maxHeight: cardHeight,
-                  minHeight: cardHeight
-                  ),
                 child: _MenuCard(
                   icon: Icons.settings,
                   title: 'Config.',
                   subtitle: '',
                   color: Colors.grey,
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Em desenvolvimento')),
+                  onTap: () => Navigator.pushNamed(context, '/settings'),
+                ),
+              ),
+
+              // ========== LOGOUT ========== ✅ NOVO
+              ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: cardWidth,
+                  minWidth: cardWidth,
+                  maxHeight: cardHeight,
+                  minHeight: cardHeight,
+                ),
+                child: _MenuCard(
+                  icon: Icons.logout,
+                  title: 'Sair',
+                  subtitle: '',
+                  color: Colors.red,
+                  onTap: () async {
+                    // Confirmar logout
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Confirmar Logout'),
+                        content: const Text('Tem a certeza que deseja sair?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancelar'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Colors.red,
+                            ),
+                            child: const Text('Sair'),
+                          ),
+                        ],
+                      ),
                     );
+
+                    if (confirmed == true && context.mounted) {
+                      // Fazer logout
+                      await ref.read(authProvider.notifier).logout();
+                      
+                      if (context.mounted) {
+                        // Voltar para login
+                        Navigator.of(context).pushNamedAndRemoveUntil(
+                          '/login',
+                          (route) => false,
+                        );
+                      }
+                    }
                   },
                 ),
               ),

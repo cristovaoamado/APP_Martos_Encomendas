@@ -1,17 +1,34 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../core/constants/api_constants.dart';
 import 'storage_service.dart';
 
 class ApiService {
-  late final Dio _dio;
+  late Dio _dio;
   final StorageService _storageService;
 
   ApiService(this._storageService) {
+    _initializeDio();
+  }
+
+  void _initializeDio() {
+    // ✅ Obter URL e timeouts do StorageService
+    final apiUrl = _storageService.getFullApiUrl();
+    final connectionTimeout = _storageService.getConnectionTimeout();
+    final receiveTimeout = _storageService.getReceiveTimeout();
+
+    if (kDebugMode) {
+      print('🌐 ApiService - Configurando:');
+      print('   URL: $apiUrl');
+      print('   Connection Timeout: ${connectionTimeout}s');
+      print('   Receive Timeout: ${receiveTimeout}s');
+    }
+
     _dio = Dio(
       BaseOptions(
-        baseUrl: ApiConstants.baseUrl,
-        connectTimeout: ApiConstants.connectionTimeout,
-        receiveTimeout: ApiConstants.receiveTimeout,
+        baseUrl: apiUrl,
+        connectTimeout: Duration(seconds: connectionTimeout),
+        receiveTimeout: Duration(seconds: receiveTimeout),
         headers: {
           'Content-Type': ApiConstants.contentType,
           'Accept': ApiConstants.accept,
@@ -19,7 +36,7 @@ class ApiService {
       ),
     );
 
-    // Adicionar interceptor para token
+    // Interceptor para token
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
@@ -30,7 +47,6 @@ class ApiService {
           return handler.next(options);
         },
         onError: (error, handler) async {
-          // Se receber 401, limpar token e redirecionar para login
           if (error.response?.statusCode == 401) {
             await _storageService.clearAuth();
           }
@@ -39,14 +55,28 @@ class ApiService {
       ),
     );
 
-    // Adicionar logging em desenvolvimento
+    // Logging
     _dio.interceptors.add(
-      LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-        error: true,
-      ),
+      LogInterceptor(requestBody: true, responseBody: true, error: true),
     );
+  }
+
+  /// ✅ Reconfigurar Dio com nova URL e timeouts (quando user muda nas settings)
+  void reconfigure() {
+    final newApiUrl = _storageService.getFullApiUrl();
+    final newConnectionTimeout = _storageService.getConnectionTimeout();
+    final newReceiveTimeout = _storageService.getReceiveTimeout();
+    
+    if (kDebugMode) {
+      print('🔄 Reconfigurando ApiService:');
+      print('   Nova URL: $newApiUrl');
+      print('   Connection Timeout: ${newConnectionTimeout}s');
+      print('   Receive Timeout: ${newReceiveTimeout}s');
+    }
+
+    _dio.options.baseUrl = newApiUrl;
+    _dio.options.connectTimeout = Duration(seconds: newConnectionTimeout);
+    _dio.options.receiveTimeout = Duration(seconds: newReceiveTimeout);
   }
 
   Dio get dio => _dio;
@@ -149,7 +179,6 @@ class ApiService {
     final statusCode = response.statusCode;
     final data = response.data;
 
-    // Tentar extrair mensagem de erro da resposta
     String errorMessage = 'Erro no servidor';
 
     if (data is Map<String, dynamic>) {

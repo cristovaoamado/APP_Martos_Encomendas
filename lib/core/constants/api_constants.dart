@@ -1,9 +1,10 @@
 /// Constantes relacionadas com a API
 class ApiConstants {
   // Base URL da API
-  static const String baseUrl =
-      'http://127.0.0.1:5000/api'; // Alterar para o teu IP/domínio
+  // static const String baseUrl =
+  //     'http://127.0.0.1:5000/api';
 
+  static const String baseUrl = "";
   // Endpoints
   static const String loginEndpoint = '/account/login';
   static const String loginPinEndpoint = '/account/pin/login';

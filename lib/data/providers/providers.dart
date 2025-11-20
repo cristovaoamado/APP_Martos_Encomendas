@@ -7,8 +7,11 @@ import '../repositories/cliente_repository.dart';
 import '../repositories/produto_repository.dart';
 import '../repositories/cor_repository.dart';
 import '../repositories/tamanho_repository.dart';
+import '../repositories/estado_repository.dart';  // ✅ NOVO
 
-// Storage Service Provider
+// ============================================
+// STORAGE SERVICE PROVIDER
+// ============================================
 // Este provider será sobrescrito no main.dart com a instância real
 final storageServiceProvider = Provider<StorageService>((ref) {
   throw UnimplementedError(
@@ -16,13 +19,17 @@ final storageServiceProvider = Provider<StorageService>((ref) {
   );
 });
 
-// API Service Provider
+// ============================================
+// API SERVICE PROVIDER
+// ============================================
 final apiServiceProvider = Provider<ApiService>((ref) {
   final storageService = ref.watch(storageServiceProvider);
   return ApiService(storageService);
 });
 
-// Repository Providers
+// ============================================
+// REPOSITORY PROVIDERS
+// ============================================
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   final apiService = ref.watch(apiServiceProvider);
   final storageService = ref.watch(storageServiceProvider);
@@ -52,4 +59,10 @@ final corRepositoryProvider = Provider<CorRepository>((ref) {
 final tamanhoRepositoryProvider = Provider<TamanhoRepository>((ref) {
   final apiService = ref.watch(apiServiceProvider);
   return TamanhoRepository(apiService);
+});
+
+// ✅ NOVO - Repository para Estados
+final estadoRepositoryProvider = Provider<EstadoRepository>((ref) {
+  final apiService = ref.watch(apiServiceProvider);
+  return EstadoRepository(apiService);
 });

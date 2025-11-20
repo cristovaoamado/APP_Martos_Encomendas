@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/providers/encomenda_provider.dart';
+import '../../../data/providers/estado_provider.dart';
 import '../../../core/constants/ui_constants.dart';
 import '../../widgets/loading_widget.dart';
 import '../../widgets/error_widget.dart' as custom;
@@ -12,7 +13,8 @@ class EncomendasListScreen extends ConsumerStatefulWidget {
   const EncomendasListScreen({super.key});
 
   @override
-  ConsumerState<EncomendasListScreen> createState() => _EncomendasListScreenState();
+  ConsumerState<EncomendasListScreen> createState() =>
+      _EncomendasListScreenState();
 }
 
 class _EncomendasListScreenState extends ConsumerState<EncomendasListScreen> {
@@ -77,7 +79,11 @@ class _EncomendasListScreenState extends ConsumerState<EncomendasListScreen> {
                         icon: const Icon(Icons.clear),
                         onPressed: () {
                           _searchController.clear();
-                          _updateFilters(_filters.copyWith(searchTerm: null));
+                          _updateFilters(
+                            _filters.copyWith(
+                              searchTerm: () => null, // ✅ Usar função
+                            ),
+                          );
                         },
                       )
                     : null,
@@ -86,7 +92,11 @@ class _EncomendasListScreenState extends ConsumerState<EncomendasListScreen> {
                 // Debounce search
                 Future.delayed(const Duration(milliseconds: 500), () {
                   if (_searchController.text == value) {
-                    _updateFilters(_filters.copyWith(searchTerm: value.isEmpty ? null : value));
+                    _updateFilters(
+                      _filters.copyWith(
+                        searchTerm: () => value.isEmpty ? null : value,
+                      ),
+                    );
                   }
                 });
               },
@@ -129,7 +139,8 @@ class _EncomendasListScreenState extends ConsumerState<EncomendasListScreen> {
                   ),
                 );
               },
-              loading: () => const LoadingWidget(message: 'A carregar encomendas...'),
+              loading: () =>
+                  const LoadingWidget(message: 'A carregar encomendas...'),
               error: (error, stack) => custom.ErrorWidget(
                 message: error.toString().replaceAll('Exception: ', ''),
                 onRetry: () {
@@ -151,7 +162,7 @@ class _EncomendasListScreenState extends ConsumerState<EncomendasListScreen> {
   }
 }
 
-class _FilterBottomSheet extends StatefulWidget {
+class _FilterBottomSheet extends ConsumerStatefulWidget {
   final EncomendaFilters currentFilters;
   final Function(EncomendaFilters) onApply;
 
@@ -161,10 +172,11 @@ class _FilterBottomSheet extends StatefulWidget {
   });
 
   @override
-  State<_FilterBottomSheet> createState() => _FilterBottomSheetState();
+  ConsumerState<_FilterBottomSheet> createState() =>
+      _FilterBottomSheetState();
 }
 
-class _FilterBottomSheetState extends State<_FilterBottomSheet> {
+class _FilterBottomSheetState extends ConsumerState<_FilterBottomSheet> {
   late int? _selectedEstado;
 
   @override
@@ -173,8 +185,27 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
     _selectedEstado = widget.currentFilters.idEstado;
   }
 
+  Color _getEstadoColor(int? idEstado) {
+    switch (idEstado) {
+      case 1:
+        return Colors.blue;
+      case 2:
+        return Colors.orange;
+      case 3:
+        return Colors.green;
+      case 4:
+        return Colors.red;
+      case 5:
+        return Colors.grey;
+      default:
+        return Colors.grey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final estadosAsync = ref.watch(estadosListProvider);
+
     return Container(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -197,46 +228,66 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: UIConstants.spacingS),
-            Wrap(
-              spacing: UIConstants.spacingS,
-              children: [
-                FilterChip(
-                  label: const Text('Todos'),
-                  selected: _selectedEstado == null,
-                  onSelected: (selected) {
-                    setState(() {
-                      _selectedEstado = null;
-                    });
-                  },
+
+            // ✅ Estados dinâmicos da API
+            estadosAsync.when(
+              data: (estados) {
+                return Wrap(
+                  spacing: UIConstants.spacingS,
+                  runSpacing: UIConstants.spacingS,
+                  children: [
+                    // Chip "Todos"
+                    FilterChip(
+                      label: const Text('Todos'),
+                      selected: _selectedEstado == null,
+                      onSelected: (selected) {
+                        setState(() {
+                          _selectedEstado = null; // ✅ Explicitamente null
+                        });
+                      },
+                    ),
+                    // Chips dinâmicos para cada estado
+                    ...estados.map((estado) {
+                      final color = _getEstadoColor(estado.idEstado);
+                      return FilterChip(
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: color,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(estado.designacaoEstado),
+                          ],
+                        ),
+                        selected: _selectedEstado == estado.idEstado,
+                        selectedColor: color.withValues(alpha: 0.2),
+                        onSelected: (selected) {
+                          setState(() {
+                            _selectedEstado =
+                                selected ? estado.idEstado : null;
+                          });
+                        },
+                      );
+                    }),
+                  ],
+                );
+              },
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: CircularProgressIndicator(),
                 ),
-                FilterChip(
-                  label: const Text('Nova'),
-                  selected: _selectedEstado == EncomendaEstados.nova,
-                  onSelected: (selected) {
-                    setState(() {
-                      _selectedEstado = selected ? EncomendaEstados.nova : null;
-                    });
-                  },
-                ),
-                FilterChip(
-                  label: const Text('Em Produção'),
-                  selected: _selectedEstado == EncomendaEstados.emProducao,
-                  onSelected: (selected) {
-                    setState(() {
-                      _selectedEstado = selected ? EncomendaEstados.emProducao : null;
-                    });
-                  },
-                ),
-                FilterChip(
-                  label: const Text('Concluída'),
-                  selected: _selectedEstado == EncomendaEstados.concluida,
-                  onSelected: (selected) {
-                    setState(() {
-                      _selectedEstado = selected ? EncomendaEstados.concluida : null;
-                    });
-                  },
-                ),
-              ],
+              ),
+              error: (error, _) => Text(
+                'Erro ao carregar estados: $error',
+                style: const TextStyle(color: Colors.red),
+              ),
             ),
 
             const SizedBox(height: UIConstants.spacingXL),
@@ -256,8 +307,9 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
+                      // ✅ CORRIGIDO: Usar função para passar null explicitamente
                       final newFilters = widget.currentFilters.copyWith(
-                        idEstado: _selectedEstado,
+                        idEstado: () => _selectedEstado,
                       );
                       widget.onApply(newFilters);
                       Navigator.pop(context);

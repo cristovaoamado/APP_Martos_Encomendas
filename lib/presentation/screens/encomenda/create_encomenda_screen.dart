@@ -507,44 +507,57 @@ class _AddProdutoDialogState extends ConsumerState<_AddProdutoDialog> {
         _selectedCor = null;
         _selectedTamanho = null;
 
-        print('🔄 PRODUTO MUDOU: ${produto.codigoProduto}');
-        print('   → Limpando cor e tamanho');
+        if (kDebugMode) {
+          print('🔄 PRODUTO MUDOU: ${produto.codigoProduto}');
+          print('   → Limpando cor e tamanho');
+        }
 
         // Preencher preço do novo produto
         if (produto.precoProduto != null) {
           _precoController.text = produto.precoProduto.toString();
-          print('   → Preço: ${produto.precoProduto}');
+          if (kDebugMode) {
+            print('   → Preço: ${produto.precoProduto}');
+          }
         }
       } else {
-        print('✅ MESMO PRODUTO: ${produto.codigoProduto}');
-        print('   → Mantendo cor e tamanho');
+        if (kDebugMode) {
+          print('✅ MESMO PRODUTO: ${produto.codigoProduto}');
+          print('   → Mantendo cor e tamanho');
+        }
       }
     });
   }
 
   void _onColorSelected(Cor cor) {
-    print('🔍 DEBUG: Cor selecionada');
-    print('  ID: ${cor.idCor}');
-    print('  Código: ${cor.codigoCor}');
-    print('  Designação: ${cor.designacaoCor}');
-
+    if (kDebugMode) {
+      print('🔍 DEBUG: Cor selecionada');
+      print('  ID: ${cor.idCor}');
+      print('  Código: ${cor.codigoCor}');
+      print('  Designação: ${cor.designacaoCor}');
+    }
     setState(() {
       _selectedCor = cor;
-      print('✅ Estado atualizado: _selectedCor = ${_selectedCor?.codigoCor}');
+      if (kDebugMode) {
+        print('✅ Estado atualizado: _selectedCor = ${_selectedCor?.codigoCor}');
+      }
     });
   }
 
   void _onSizeSelected(Tamanho tamanho) {
-    print('🔍 DEBUG: Tamanho selecionado');
-    print('  ID: ${tamanho.idTamanho}');
-    print('  Código: ${tamanho.codigoTamanho}');
-    print('  Designação: ${tamanho.designacaoTamanho}');
+    if (kDebugMode) {
+      print('🔍 DEBUG: Tamanho selecionado');
+      print('  ID: ${tamanho.idTamanho}');
+      print('  Código: ${tamanho.codigoTamanho}');
+      print('  Designação: ${tamanho.designacaoTamanho}');
+    }
 
     setState(() {
       _selectedTamanho = tamanho;
-      print(
-        '✅ Estado atualizado: _selectedTamanho = ${_selectedTamanho?.codigoTamanho}',
-      );
+      if (kDebugMode) {
+        print(
+          '✅ Estado atualizado: _selectedTamanho = ${_selectedTamanho?.codigoTamanho}',
+        );
+      }
     });
   }
 
@@ -881,12 +894,14 @@ class _AddProdutoDialogState extends ConsumerState<_AddProdutoDialog> {
     // Manter produto, cor, tamanho, quantidade e preço
     // para facilitar adicionar linhas seguidas com mesmos valores
 
-    print('📦 Produto adicionado - Mantendo TODOS os valores');
-    print('   → Produto: ${_selectedProduto?.codigoProduto}');
-    print('   → Cor: ${_selectedCor?.codigoCor}');
-    print('   → Tamanho: ${_selectedTamanho?.codigoTamanho}');
-    print('   → Quantidade: ${_quantidadeController.text}');
-    print('   → Preço: ${_precoController.text}');
+    if (kDebugMode) {
+      print('📦 Produto adicionado - Mantendo TODOS os valores');
+      print('   → Produto: ${_selectedProduto?.codigoProduto}');
+      print('   → Cor: ${_selectedCor?.codigoCor}');
+      print('   → Tamanho: ${_selectedTamanho?.codigoTamanho}');
+      print('   → Quantidade: ${_quantidadeController.text}');
+      print('   → Preço: ${_precoController.text}');
+    }
 
     // Apenas reset do form state (não limpa valores)
     setState(() {});

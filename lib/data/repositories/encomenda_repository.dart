@@ -54,12 +54,16 @@ class EncomendaRepository {
     return EncomendaDetail.fromJson(response.data);
   }
 
-  /// Atualizar estado da encomenda
+  /// ✅ ATUALIZADO - Atualizar estado da encomenda
   Future<void> updateEstado(int id, int novoEstado) async {
-    await _apiService.put(
-      '${ApiConstants.encomendasEndpoint}/$id/estado',
-      data: {'idEstado': novoEstado},
-    );
+    try {
+      await _apiService.put(
+        '${ApiConstants.encomendasEndpoint}/$id/estado',
+        data: {'idEstado': novoEstado},
+      );
+    } catch (e) {
+      throw Exception('Erro ao atualizar estado da encomenda: $e');
+    }
   }
 
   /// Obter encomendas de um cliente
