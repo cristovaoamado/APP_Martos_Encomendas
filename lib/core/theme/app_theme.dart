@@ -22,8 +22,8 @@ class AppTheme {
       scrolledUnderElevation: 4,
     ),
     
-    // Card
-    cardTheme: CardThemeData(  // ✅ CORRIGIDO: CardTheme → CardThemeData
+    // Card - ✅ CORRIGIDO
+    cardTheme: CardThemeData(
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -88,8 +88,8 @@ class AppTheme {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     ),
     
-    // Dialog
-    dialogTheme: DialogTheme(
+    // Dialog - ✅ CORRIGIDO
+    dialogTheme: DialogThemeData(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -127,8 +127,8 @@ class AppTheme {
       scrolledUnderElevation: 4,
     ),
     
-    // Card
-    cardTheme: CardThemeData(  // ✅ CORRIGIDO: CardTheme → CardThemeData
+    // Card - ✅ CORRIGIDO
+    cardTheme: CardThemeData(
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -193,8 +193,8 @@ class AppTheme {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     ),
     
-    // Dialog
-    dialogTheme: DialogTheme(
+    // Dialog - ✅ CORRIGIDO
+    dialogTheme: DialogThemeData(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
