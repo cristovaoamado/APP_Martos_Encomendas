@@ -1,185 +1,218 @@
 import 'package:flutter/material.dart';
-import '../constants/ui_constants.dart';
 
 class AppTheme {
-  // CORES
-  static const Color navyBlue = Color(0xFF002B5B);
-  static const Color turquoise = Color(0xFF00C8D7);
-
-  static const Color backgroundColor = Color(0xFFF4F8FB);
-  static const Color surfaceColor = Colors.white;
-
-  static const Color textPrimary = Color(0xFF1A1A1A);
-  static const Color textSecondary = Color(0xFF4F4F4F);
-
+  // Cores principais
+  static const Color primaryColor = Color(0xFF1976D2);
+  static const Color secondaryColor = Color(0xFF424242);
+  static const Color accentColor = Color(0xFFFF6F00);
+  
+  // Tema claro
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-
-    // CORES BASE
-    primaryColor: navyBlue,
-    colorScheme: const ColorScheme.light(
-      primary: navyBlue,
-      secondary: turquoise,
-      surface: Colors.white,
-      error: Color(0xFFD32F2F),
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: primaryColor,
+      brightness: Brightness.light,
     ),
-
-    scaffoldBackgroundColor: backgroundColor,
-
-    // APP BAR
+    
+    // AppBar
     appBarTheme: const AppBarTheme(
-      backgroundColor: navyBlue,
-      foregroundColor: Colors.white,
+      centerTitle: false,
+      elevation: 0,
+      scrolledUnderElevation: 4,
+    ),
+    
+    // Card
+    cardTheme: CardThemeData(  // ✅ CORRIGIDO: CardTheme → CardThemeData
       elevation: 2,
-      centerTitle: true,
-      titleSpacing: UIConstants.spacingL,
-      titleTextStyle: TextStyle(
-        fontSize: UIConstants.fontXL,
-        fontWeight: FontWeight.bold,
-        color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
       ),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     ),
-
-    // CARTÕES / CARDS
-    cardTheme: const CardTheme(
-      elevation: 2,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-      margin: EdgeInsets.all(UIConstants.spacingM),
-    ),
-
-    // BOTÃO TEXTO (GRANDE)
-    textButtonTheme: TextButtonThemeData(
-      style: ButtonStyle(
-        foregroundColor: WidgetStateProperty.all(navyBlue),
-        padding: WidgetStateProperty.all(
-          const EdgeInsets.symmetric(
-            vertical: UIConstants.spacingL,
-            horizontal: UIConstants.spacingXL,
-          ),
-        ),
-        shape: WidgetStateProperty.all(
-          const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-        ),
-        textStyle: WidgetStateProperty.all(
-          const TextStyle(
-            fontSize: UIConstants.fontM,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    ),
-
-    // BOTÃO PREENCHIDO (FILLED) — igual ao ElevatedButton
-    filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(
-        backgroundColor: navyBlue,
-        foregroundColor: Colors.white,
-        elevation: 3,
-        padding: const EdgeInsets.symmetric(
-          vertical: UIConstants.spacingL,
-          horizontal: UIConstants.spacingXL,
-        ),
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-        textStyle: const TextStyle(
-          fontSize: UIConstants.fontL,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    ),
-
-    // BOTÃO ELEVADO (GRANDE)
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: navyBlue,
-        foregroundColor: Colors.white,
-        elevation: 3,
-        padding: const EdgeInsets.symmetric(
-          vertical: UIConstants.spacingL,
-          horizontal: UIConstants.spacingXL,
-        ),
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-        textStyle: const TextStyle(
-          fontSize: UIConstants.fontL,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    ),
-
-    // BOTÃO CONTORNADO
-    outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(
-        side: const BorderSide(color: navyBlue, width: 2),
-        padding: const EdgeInsets.symmetric(
-          vertical: UIConstants.spacingL,
-          horizontal: UIConstants.spacingXL,
-        ),
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-        foregroundColor: navyBlue,
-        textStyle: const TextStyle(
-          fontSize: UIConstants.fontM,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    ),
-
-    // INPUTS / CAMPOS DE TEXTO
+    
+    // Input
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: UIConstants.spacingL,
-        vertical: UIConstants.spacingL,
-      ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.zero,
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(12),
       ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.zero,
-        borderSide: BorderSide(color: Colors.grey.shade300),
-      ),
-      focusedBorder: const OutlineInputBorder(
-        borderRadius: BorderRadius.zero,
-        borderSide: BorderSide(color: turquoise, width: 2),
-      ),
-      errorBorder: const OutlineInputBorder(
-        borderRadius: BorderRadius.zero,
-        borderSide: BorderSide(color: Colors.red),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 12,
       ),
     ),
-
-    // FLOATING BUTTON
+    
+    // Buttons
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        elevation: 2,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    ),
+    
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    ),
+    
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    ),
+    
+    // FloatingActionButton
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      backgroundColor: turquoise,
-      foregroundColor: Colors.white,
       elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(16)),
+      ),
     ),
-
-    // DIVISOR
-    dividerTheme: DividerThemeData(
-      color: Colors.grey.shade300,
+    
+    // Chip
+    chipTheme: ChipThemeData(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    ),
+    
+    // Dialog
+    dialogTheme: DialogTheme(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      elevation: 8,
+    ),
+    
+    // BottomSheet
+    bottomSheetTheme: const BottomSheetThemeData(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      elevation: 8,
+    ),
+    
+    // Divider
+    dividerTheme: const DividerThemeData(
+      space: 1,
       thickness: 1,
-      space: UIConstants.spacingM,
     ),
-
-    // TIPOGRAFIA
-    textTheme: const TextTheme(
-      displayLarge: TextStyle(
-        fontSize: 32,
-        fontWeight: FontWeight.bold,
-        color: textPrimary,
+  );
+  
+  // Tema escuro
+  static ThemeData darkTheme = ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: primaryColor,
+      brightness: Brightness.dark,
+    ),
+    
+    // AppBar
+    appBarTheme: const AppBarTheme(
+      centerTitle: false,
+      elevation: 0,
+      scrolledUnderElevation: 4,
+    ),
+    
+    // Card
+    cardTheme: CardThemeData(  // ✅ CORRIGIDO: CardTheme → CardThemeData
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
       ),
-      titleLarge: TextStyle(
-        fontSize: 22,
-        fontWeight: FontWeight.w600,
-        color: textPrimary,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    ),
+    
+    // Input
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
       ),
-      bodyLarge: TextStyle(fontSize: 18, color: textPrimary),
-      bodyMedium: TextStyle(fontSize: 16, color: textPrimary),
-      bodySmall: TextStyle(fontSize: 14, color: textSecondary),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 12,
+      ),
+    ),
+    
+    // Buttons
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        elevation: 2,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    ),
+    
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    ),
+    
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    ),
+    
+    // FloatingActionButton
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(16)),
+      ),
+    ),
+    
+    // Chip
+    chipTheme: ChipThemeData(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    ),
+    
+    // Dialog
+    dialogTheme: DialogTheme(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      elevation: 8,
+    ),
+    
+    // BottomSheet
+    bottomSheetTheme: const BottomSheetThemeData(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      elevation: 8,
+    ),
+    
+    // Divider
+    dividerTheme: const DividerThemeData(
+      space: 1,
+      thickness: 1,
     ),
   );
 }
