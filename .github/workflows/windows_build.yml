@@ -3,12 +3,14 @@ name: Build Windows App
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build-windows:
     runs-on: windows-latest
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -17,29 +19,94 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          cache: true
 
-      - name: Cache Flutter dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.pub-cache
-            build
-          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
+      - name: Get Flutter version
+        run: flutter --version
 
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Run Flutter analyze
+        run: flutter analyze
+        continue-on-error: true
 
       - name: Enable Windows support
         run: flutter config --enable-windows-desktop
 
       - name: Build Windows Release
-        run: flutter build windows --release
+        run: flutter build windows --release --verbose
+
+      - name: Create version file
+        run: |
+          $version = flutter --version
+          $date = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+          @"
+          Build Date: $date
+          Flutter Version:
+          $version
+          "@ | Out-File -FilePath "build/windows/x64/runner/Release/VERSION.txt"
 
       - name: List build output
-        run: Get-ChildItem "build/windows/x64/runner/Release" -Recurse
+        run: |
+          Write-Host "=== Build Output Structure ==="
+          Get-ChildItem "build/windows/x64/runner/Release" -Recurse | Select-Object FullName, Length
+          Write-Host ""
+          Write-Host "=== Main executable ==="
+          Get-Item "build/windows/x64/runner/Release/*.exe"
 
-      - name: Upload artifact
+      - name: Create ZIP archive
+        run: |
+          $appName = "Martos_Encomendas"
+          $version = (Get-Date -Format "yyyyMMdd_HHmmss")
+          $zipName = "${appName}_Windows_${version}.zip"
+          Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath $zipName
+          Write-Host "Created: $zipName"
+          Write-Host "Size: $((Get-Item $zipName).Length / 1MB) MB"
+          
+      - name: Upload Windows Build (ZIP)
         uses: actions/upload-artifact@v4
         with:
-          name: windows-build
+          name: windows-build-zip
+          path: "*.zip"
+          retention-days: 30
+
+      - name: Upload Windows Build (Folder)
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build-folder
           path: build/windows/x64/runner/Release
+          retention-days: 7
+
+      - name: Create Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "*.zip"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Job adicional para verificar code quality
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      
+      - run: flutter pub get
+      
+      - name: Check formatting
+        run: dart format --set-exit-if-changed .
+        continue-on-error: true
+      
+      - name: Analyze code
+        run: flutter analyze
+        continue-on-error: true
+      
+      - name: Run tests
+        run: flutter test
+        continue-on-error: true
